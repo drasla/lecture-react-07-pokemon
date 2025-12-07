@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
 import styled from "styled-components";
 import { PageContainer, PageTitle } from "../styles";
 import { useNavigate, useParams } from "react-router";
+import { useQuery } from "@tanstack/react-query";
 
 interface DetailData {
     name: string;
@@ -48,19 +48,21 @@ const BackButton = styled.button`
 export default function Detail() {
     const { id } = useParams();
     const navigate = useNavigate();
-    const [data, setData] = useState<DetailData | null>(null);
 
-    useEffect(() => {
-        fetch(`https://pokeapi.co/api/v2/pokemon/${id}`)
-            .then(res => res.json())
-            .then(data => setData(data));
-    }, [id]);
+    const { data, isLoading, isError } = useQuery({
+        queryKey: ["pokemonDetail", id],
+        queryFn: () => fetch(`https://pokeapi.co/api/v2/pokemon/${id}`).then(res => res.json())
+            .then((data:DetailData) => data)
+    })
+
+    if (isLoading) return <PageContainer>Loading...</PageContainer>
+    if (isError) return <PageContainer>Error loading Pokemon...</PageContainer>
 
     return (
         <PageContainer>
             <PageTitle>Pokémon Detail</PageTitle>
 
-            {data && (
+            {data! && (
                 <Info>
                     <Img src={data.sprites.front_default} alt={data.name} />
 
